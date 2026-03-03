@@ -1,0 +1,548 @@
+---
+const title = "Venkateshwar Reddy · GitHub overview";
+const description = "Standalone overview site for venkateshwarreddyr — flagship AI infrastructure, experiments, and next steps.";
+
+const navLinks = [
+  { label: "Work", href: "#work" },
+  { label: "Projects", href: "#projects" },
+  { label: "Skills", href: "#skills" },
+  { label: "Contact", href: "#contact" }
+];
+
+const statHighlights = [
+  {
+    value: "AI infrastructure",
+    detail: "Designing resilient LangGraph pipelines on AWS with NestJS, SQS, and DynamoDB."
+  },
+  {
+    value: "Observability-first",
+    detail: "Instrumentation with OpenTelemetry, ADOT sidecars, CloudWatch EMF, and correlated logging."
+  },
+  {
+    value: "Docs & tooling",
+    detail: "Astro + Cloudflare Pages + GitHub Actions keep this overview live for every commit."
+  }
+];
+
+const projects = [
+  {
+    name: "Multi-Agent Orchestrator Platform",
+    tag: "Flagship",
+    description:
+      "Production-grade LangGraph orchestration with retry/fallback routing, cost tracking, and CloudWatch observability.",
+    impact: "LangGraph · NestJS · AWS SQS/DynamoDB · OpenTelemetry",
+    link: "https://github.com/venkateshwarreddyr/Multi-Agent-Orchestrator-Platform"
+  },
+  {
+    name: "Browser Copilot",
+    tag: "Experiment",
+    description: "Ongoing exploration of lightweight browser helpers for automating research and workflow routines.",
+    impact: "Extension-style automations · prompt helpers",
+    link: "https://github.com/venkateshwarreddyr/browser-copilot"
+  },
+  {
+    name: "Project Planner",
+    tag: "Ops",
+    description: "Kanban-inspired planning board for tracking complex initiatives, dependencies, and progress over time.",
+    impact: "React · TypeScript · lightweight collaboration features",
+    link: "https://github.com/venkateshwarreddyr/project-planner"
+  },
+  {
+    name: "Redis Node React",
+    tag: "Full-stack",
+    description: "Minimal full-stack template that pairs Redis storage with Node APIs and a React front end for rapid demos.",
+    impact: "Redis · Express/Node · React",
+    link: "https://github.com/venkateshwarreddyr/redis-node-react"
+  }
+];
+
+const skills = [
+  "TypeScript",
+  "NestJS",
+  "LangGraph.js",
+  "LangChain",
+  "AWS CDK",
+  "SQS",
+  "DynamoDB",
+  "OpenTelemetry",
+  "CloudWatch EMF",
+  "Astro",
+  "Cloudflare Pages",
+  "Docker",
+  "GitHub Actions"
+];
+
+const contactActions = [
+  { label: "GitHub profile", href: "https://github.com/venkateshwarreddyr" },
+  {
+    label: "Explore this repo",
+    href: "https://github.com/venkateshwarreddyr/Multi-Agent-Orchestrator-Platform"
+  }
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #030712;
+        --surface: rgba(8, 12, 24, 0.95);
+        --border: rgba(255, 255, 255, 0.08);
+        --accent: #7c8cff;
+        --text: #f4f6fb;
+        --muted: #a9b4c6;
+        --muted-strong: #d6dbeb;
+        --card: rgba(255, 255, 255, 0.04);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", system-ui, sans-serif;
+        background: radial-gradient(circle at 20% -10%, rgba(124, 140, 255, 0.25), transparent 45%),
+          radial-gradient(circle at 80% 0%, rgba(255, 138, 86, 0.15), transparent 40%),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      nav {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        backdrop-filter: blur(20px);
+        background: rgba(3, 7, 18, 0.75);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 2rem;
+        z-index: 10;
+      }
+
+      .nav-brand {
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.05em;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .nav-links a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+      }
+
+      main {
+        width: min(1100px, 100%);
+        margin: 0 auto;
+        padding: 2rem 1.25rem 5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 3rem;
+      }
+
+      .hero {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 15px 40px rgba(2, 4, 10, 0.6);
+      }
+
+      .hero h1 {
+        font-size: clamp(2.5rem, 4vw, 3.5rem);
+        margin-bottom: 0.5rem;
+      }
+
+      .hero h2 {
+        font-size: 1.25rem;
+        color: var(--muted-strong);
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+      }
+
+      .hero p {
+        font-size: 1rem;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 2rem;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 0.8rem 1.5rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        border: 1px solid transparent;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #0b1221;
+        box-shadow: 0 10px 25px rgba(124, 140, 255, 0.4);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+      }
+
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        min-height: 160px;
+      }
+
+      .stat-card h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1rem;
+        color: var(--accent);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .stat-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.4;
+        font-size: 0.95rem;
+      }
+
+      section h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      .section-heading {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .section-heading p {
+        color: var(--muted);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+      }
+
+      .work-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 2rem;
+        box-shadow: 0 15px 35px rgba(2, 4, 10, 0.4);
+      }
+
+      .work-card h3 {
+        margin-top: 0;
+        font-size: 1.5rem;
+      }
+
+      .work-card p {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .project-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+      }
+
+      .project-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .project-tag {
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .project-card h4 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .project-card p {
+        margin: 0;
+        color: var(--muted-strong);
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+
+      .project-meta {
+        margin-top: auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .project-meta a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .skill-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .skill-badge {
+        padding: 0.5rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        border: 1px solid var(--border);
+      }
+
+      .contact-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .contact-panel p {
+        color: var(--muted);
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .contact-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .contact-actions a {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.65rem 1.2rem;
+        text-decoration: none;
+        color: var(--muted-strong);
+        font-weight: 600;
+        transition: border-color 0.2s ease, color 0.2s ease;
+      }
+
+      .contact-actions a:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+
+      footer {
+        text-align: center;
+        padding: 3rem 1.5rem 2rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      @media (max-width: 600px) {
+        nav {
+          padding: 0.75rem 1rem;
+        }
+
+        .hero {
+          padding: 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <nav>
+        <div class="nav-brand">Venkateshwarreddyr Overview</div>
+        <div class="nav-links">
+          {navLinks.map(link => (
+            <a href={link.href}>{link.label}</a>
+          ))}
+        </div>
+      </nav>
+
+      <main>
+        <section id="overview" class="hero">
+          <p style="letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); font-size: 0.75rem;">
+            GitHub profile overview
+          </p>
+          <h1>Venkateshwar Reddy</h1>
+          <h2>
+            Building production-grade AI infrastructure, distributed systems, and developer tooling with clarity.
+          </h2>
+          <p>
+            This Astro site is the living overview page for <em>venkateshwarreddyr</em>.
+            Every commit here can shape what visitors see when they land on the GitHub profile.
+            The flagship Multi-Agent Orchestrator Platform anchors the story, with experiments and tooling layered around it.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/venkateshwarreddyr" target="_blank" rel="noreferrer">
+              View GitHub profile
+            </a>
+            <a
+              class="btn btn-secondary"
+              href="https://github.com/venkateshwarreddyr/Multi-Agent-Orchestrator-Platform"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Explore flagship repo
+            </a>
+          </div>
+        </section>
+
+        <section class="stat-grid">
+          {statHighlights.map(stat => (
+            <article class="stat-card">
+              <h3>{stat.value}</h3>
+              <p>{stat.detail}</p>
+            </article>
+          ))}
+        </section>
+
+        <section id="work">
+          <div class="section-heading">
+            <p>Work</p>
+            <h2>What powers this profile</h2>
+          </div>
+          <div class="work-card">
+            <h3>Multi-Agent Orchestrator Platform</h3>
+            <p>
+              LangGraph.js serves as the control plane, with NestJS, AWS SQS, and DynamoDB handling production traffic.
+              Crystal-clear timeout, retry, and tracing safeguards keep generators accountable while every run scores for quality,
+              cost, and observability.
+            </p>
+            <p>
+              This repository not only contains the services — it also drives the GitHub overview site you are reading now.
+              Pushes to <strong>main</strong> automatically build the Astro docs and keep the public page up to date.
+            </p>
+          </div>
+        </section>
+
+        <section id="projects">
+          <div class="section-heading">
+            <p>Projects</p>
+            <h2>Signature work and experiments</h2>
+          </div>
+          <div class="project-grid">
+            {projects.map(project => (
+              <article class="project-card">
+                <span class="project-tag">{project.tag}</span>
+                <h4>{project.name}</h4>
+                <p>{project.description}</p>
+                <div class="project-meta">
+                  <span>{project.impact}</span>
+                  <a href={project.link} target="_blank" rel="noreferrer">View repo →</a>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="skills">
+          <div class="section-heading">
+            <p>Skills</p>
+            <h2>Core strengths</h2>
+          </div>
+          <div class="skill-badges">
+            {skills.map(skill => (
+              <span class="skill-badge">{skill}</span>
+            ))}
+          </div>
+        </section>
+
+        <section id="contact">
+          <div class="section-heading">
+            <p>Contact</p>
+            <h2>Ready to collaborate</h2>
+          </div>
+          <div class="contact-panel">
+            <p>
+              Ping directly through GitHub for collaboration, architecture reviews, or to talk through distributed AI
+              programs. This repo is already cemented as the overview page, so any edits here become part of the public
+              story.
+            </p>
+            <div class="contact-actions">
+              {contactActions.map(action => (
+                <a href={action.href} target="_blank" rel="noreferrer">{action.label}</a>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        Maintained by <a href="https://github.com/venkateshwarreddyr">venkateshwarreddyr</a> · Built with Astro · Source in
+        <a href="https://github.com/venkateshwarreddyr/Multi-Agent-Orchestrator-Platform">Multi-Agent Orchestrator Platform</a>
+      </footer>
+    </div>
+  </body>
+</html>

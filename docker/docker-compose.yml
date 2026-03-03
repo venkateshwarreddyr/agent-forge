@@ -1,0 +1,122 @@
+services:
+  # ── LocalStack — local AWS (SQS + DynamoDB) ────────────────────────────────
+  localstack:
+    image: localstack/localstack:3.5
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,dynamodb
+      - DEFAULT_REGION=us-east-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── Bootstrap — creates SQS queue + DynamoDB table in LocalStack ───────────
+  localstack-init:
+    image: amazon/aws-cli:latest
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      aws --endpoint-url=http://localstack:4566 sqs create-queue \
+          --queue-name orchestrator-dlq &&
+      aws --endpoint-url=http://localstack:4566 sqs create-queue \
+          --queue-name orchestrator-jobs \
+          --attributes VisibilityTimeout=300,RedrivePolicy='{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:orchestrator-dlq\",\"maxReceiveCount\":\"3\"}' &&
+      aws --endpoint-url=http://localstack:4566 dynamodb create-table \
+          --table-name orchestrator-runs \
+          --attribute-definitions \
+              AttributeName=run_id,AttributeType=S \
+              AttributeName=sk,AttributeType=S \
+              AttributeName=status,AttributeType=S \
+              AttributeName=created_at,AttributeType=S \
+          --key-schema \
+              AttributeName=run_id,KeyType=HASH \
+              AttributeName=sk,KeyType=RANGE \
+          --global-secondary-indexes '[{\"IndexName\":\"status-createdAt-index\",\"KeySchema\":[{\"AttributeName\":\"status\",\"KeyType\":\"HASH\"},{\"AttributeName\":\"created_at\",\"KeyType\":\"RANGE\"}],\"Projection\":{\"ProjectionType\":\"ALL\"},\"ProvisionedThroughput\":{\"ReadCapacityUnits\":5,\"WriteCapacityUnits\":5}}]' \
+          --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 &&
+      echo 'LocalStack bootstrap complete.'
+      "
+
+  # ── API server ─────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - ORCHESTRATOR_MODE=api
+      - LLM_API_KEY=${LLM_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+      - LLM_BASE_URL=${LLM_BASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/orchestrator-jobs
+      - DYNAMODB_TABLE_NAME=orchestrator-runs
+      - USE_LOCALSTACK=true
+      - LOCALSTACK_ENDPOINT=http://localstack:4566
+      - OTLP_ENDPOINT=http://otel-collector:4318
+      - ENVIRONMENT=development
+      - PORT=3000
+    depends_on:
+      localstack-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ── SQS Worker ────────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      - ORCHESTRATOR_MODE=worker
+      - LLM_API_KEY=${LLM_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+      - LLM_BASE_URL=${LLM_BASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/orchestrator-jobs
+      - DYNAMODB_TABLE_NAME=orchestrator-runs
+      - USE_LOCALSTACK=true
+      - LOCALSTACK_ENDPOINT=http://localstack:4566
+      - OTLP_ENDPOINT=http://otel-collector:4318
+      - ENVIRONMENT=development
+    depends_on:
+      localstack-init:
+        condition: service_completed_successfully
+
+  # ── OpenTelemetry Collector (local dev) ────────────────────────────────────
+  # In ECS this is replaced by the ADOT sidecar container.
+  # Here it collects traces and prints them to stdout for local debugging.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+
+volumes:
+  localstack_data:

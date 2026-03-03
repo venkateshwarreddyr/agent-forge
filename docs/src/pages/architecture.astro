@@ -1,0 +1,175 @@
+---
+const title = "Architecture — Multi-Agent Orchestrator";
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+      --green: #3fb950; --purple: #bc8cff;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    nav {
+      border-bottom: 1px solid var(--border); padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: var(--bg); z-index: 100;
+    }
+    .nav-brand { font-weight: 700; color: var(--text); text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.875rem; }
+    .nav-links a:hover { color: var(--text); }
+
+    main { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    h1 { font-size: 2.25rem; font-weight: 700; margin-bottom: 1rem; }
+    h2 { font-size: 1.35rem; font-weight: 600; margin: 2.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--accent); }
+    p { color: var(--muted); margin-bottom: 1rem; }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--text);
+    }
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.825rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .callout {
+      background: rgba(88,166,255,0.08);
+      border: 1px solid rgba(88,166,255,0.25);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    .callout strong { color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+    th, td { padding: 0.6rem 1rem; border: 1px solid var(--border); text-align: left; }
+    th { background: var(--surface); font-weight: 600; }
+    td { color: var(--muted); }
+    td:first-child { color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">Multi-Agent Orchestrator</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/architecture">Architecture</a>
+    <a href="/api-reference">API Reference</a>
+    <a href="https://github.com/venkateshwarreddyr/Multi-Agent-Orchestrator-Platform" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<main>
+  <h1>Architecture Deep-Dive</h1>
+  <p>A walkthrough of every design decision in the platform, with the interview reasoning behind each choice.</p>
+
+  <h2>1. LangGraph Graph Structure</h2>
+  <p>The agent pipeline uses a <strong>hub-and-spoke</strong> topology. Every specialist agent (Planner, Coder, Reviewer, Tester) returns control to the Supervisor after completion. The Supervisor is the only routing node.</p>
+
+  <pre>supervisor → planner → supervisor → coder → supervisor → reviewer
+                                  ↑                          ↓
+                            (revision loop)           supervisor → tester → END
+                                  ↑_________score &lt; 0.7___________|</pre>
+
+  <div class="callout">
+    <strong>Interview point:</strong> Hub-and-spoke vs direct agent-to-agent edges.
+    Direct edges create O(N²) routing complexity as you add agents — each agent
+    must know about all possible next agents. Hub-and-spoke keeps routing logic
+    in one place, making it testable and extensible.
+  </div>
+
+  <h3>Supervisor routing function</h3>
+  <p>The supervisor is a <strong>pure function</strong> — no LLM call, no side effects. It reads the current <code>AgentState</code> and returns the next node name as a string. This makes it fully unit-testable with a plain dict input, and adds zero latency to the routing decision.</p>
+
+  <h3>Loop guard</h3>
+  <p><code>revision_count</code> in <code>AgentState</code> tracks how many Coder→Reviewer cycles have run. The supervisor checks it before routing back to the Coder. At <code>max_revision_cycles=3</code>, it accepts best-effort output and routes to Tester regardless of score.</p>
+
+  <h2>2. SQS + ECS Async Pattern</h2>
+  <p>The API returns <strong>202 Accepted</strong> immediately, decoupling HTTP lifetime from LLM execution time (30–120s). Clients poll <code>GET /run/{"{id}"}</code> until status changes.</p>
+
+  <table>
+    <thead><tr><th>Parameter</th><th>Value</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>WaitTimeSeconds</td><td>20</td><td>Long-poll — avoids $0.40/M API calls from short-polling</td></tr>
+      <tr><td>VisibilityTimeout</td><td>300s</td><td>Must exceed max graph runtime; enables at-least-once retry</td></tr>
+      <tr><td>maxReceiveCount</td><td>3</td><td>Three processing attempts before routing to DLQ</td></tr>
+      <tr><td>Delete-on-success</td><td>Only after execute()</td><td>Failed messages stay in queue for retry</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. DynamoDB Single-Table Design</h2>
+  <pre>Table: orchestrator-runs
+PK (S): run_id   SK (S): sk = "RUN"
+
+GSI: status-createdAt-index
+  PK: status → enables "all running jobs" without scan
+  SK: created_at → time-range sub-queries
+
+TTL: auto-deletes items after 30 days</pre>
+
+  <div class="callout">
+    <strong>Interview point:</strong> The GSI on <code>status + created_at</code> enables the
+    <code>GET /run?status=running</code> query without a full table scan.
+    TTL eliminates the need for a separate cleanup job. Fixed SK="RUN" anticipates
+    future sub-items (e.g. per-agent spans as SK="SPAN#planner").
+  </div>
+
+  <h2>4. OpenTelemetry + ADOT Sidecar</h2>
+  <p>The application sends traces via OTLP/gRPC to <code>localhost:4317</code> — the ADOT sidecar container in the same ECS task. ADOT forwards to CloudWatch X-Ray. Swapping observability backends requires only an ADOT config change, not a code deployment.</p>
+
+  <pre>Trace: run_abc123
+├── span: http.post /run              [FastAPI middleware]
+│
+└── span: worker.execute run_abc123   [SQS consumer]
+    ├── span: agent.planner
+    │   └── span: llm.chat gpt-4o
+    ├── span: agent.coder
+    │   └── span: llm.chat gpt-4o
+    ├── span: agent.reviewer
+    │   └── span: llm.chat gpt-4o
+    └── span: agent.tester
+        └── span: llm.chat gpt-4o</pre>
+
+  <h2>5. Retry + Fallback Decorator</h2>
+  <p>The <code>@with_retry(max_attempts=3, fallback_attr="fallback_llm")</code> decorator applies to all agent <code>__call__</code> methods. On the last attempt, <code>self.llm</code> is temporarily swapped to <code>self.fallback_llm</code> (gpt-4o-mini).</p>
+
+  <div class="callout">
+    <strong>Key detail — jitter:</strong> The backoff delay is <code>base * 2^attempt + random(0,1)</code>.
+    The <code>random(0,1)</code> term prevents thundering herd — without it, all workers
+    that hit a rate limit simultaneously wake up at the same moment and re-hammer the API.
+  </div>
+
+  <h2>6. CloudWatch EMF Metrics</h2>
+  <p>Custom metrics are emitted as Embedded Metric Format JSON log lines — no <code>PutMetricData</code> API calls. The CloudWatch agent parses them automatically. This means cost-per-run is a native CloudWatch metric, queryable in dashboards and alertable.</p>
+
+  <h2>7. ECS Auto-scaling on Queue Depth</h2>
+  <p>The Fargate service scales on <code>ApproximateNumberOfMessagesVisible</code>, not CPU utilization. CPU-based scaling is reactive — CPU spikes after the work has already been sitting in the queue. Queue-depth scaling is predictive — workers are added before latency increases.</p>
+
+  <h2>8. CDK vs Terraform</h2>
+  <p>AWS CDK (Python) was chosen over Terraform for three reasons: same language as application code (no context-switching), L3 constructs encode AWS best practices by default, and no S3 state file bootstrapping required.</p>
+</main>
+
+</body>
+</html>

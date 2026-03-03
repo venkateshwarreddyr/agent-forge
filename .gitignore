@@ -1,0 +1,42 @@
+# Node.js
+node_modules/
+dist/
+.nest/
+*.js
+*.d.ts
+*.js.map
+!.eslintrc.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# AWS CDK
+infra/cdk/cdk.out/
+infra/cdk/.cdk.staging/
+infra/cdk/node_modules/
+infra/cdk/dist/
+
+# Testing / coverage
+coverage/
+.jest/
+
+# Docker
+docker/.env
+
+# Node (docs site)
+docs/node_modules/
+docs/.astro/
+docs/dist/
+
+# macOS
+.DS_Store

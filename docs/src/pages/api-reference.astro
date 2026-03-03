@@ -1,0 +1,208 @@
+---
+const title = "API Reference — Multi-Agent Orchestrator";
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+      --green: #3fb950; --method-post: #bf8700; --method-get: #1a7f37;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+    nav {
+      border-bottom: 1px solid var(--border); padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: var(--bg); z-index: 100;
+    }
+    .nav-brand { font-weight: 700; color: var(--text); text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.875rem; }
+    .nav-links a:hover { color: var(--text); }
+
+    main { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    h1 { font-size: 2.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--muted); margin-bottom: 3rem; }
+    h2 { font-size: 1.35rem; font-weight: 600; margin: 3rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    p { color: var(--muted); margin-bottom: 1rem; }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.85em; color: var(--text);
+    }
+    pre {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1.25rem; overflow-x: auto;
+      margin: 1rem 0; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.825rem; line-height: 1.6; color: var(--text);
+    }
+    .endpoint {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem;
+    }
+    .endpoint-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .method {
+      padding: 0.2rem 0.6rem; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700;
+    }
+    .method-post { background: rgba(191,135,0,0.2); color: #e3a000; }
+    .method-get  { background: rgba(26,127,55,0.2);  color: #3fb950; }
+    .path { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 500; }
+    .desc { color: var(--muted); font-size: 0.875rem; }
+    h4 { font-size: 0.875rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 1.25rem 0 0.5rem; }
+    .note { font-size: 0.85rem; color: var(--muted); font-style: italic; margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">Multi-Agent Orchestrator</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/architecture">Architecture</a>
+    <a href="/api-reference">API Reference</a>
+    <a href="https://github.com/venkateshwarreddyr/Multi-Agent-Orchestrator-Platform" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<main>
+  <h1>API Reference</h1>
+  <p class="subtitle">Base URL: <code>http://&lt;ALB_DNS&gt;</code> · All responses are JSON · Full OpenAPI spec at <code>/openapi.json</code></p>
+
+  <h2>Runs</h2>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-post">POST</span>
+      <span class="path">/run</span>
+    </div>
+    <p class="desc">Submit requirements and start an async code generation pipeline. Returns 202 immediately.</p>
+
+    <h4>Request Body</h4>
+    <pre>{`{
+  "requirements": "Build a FastAPI endpoint that accepts a list of integers and returns their mean."
+}`}</pre>
+
+    <h4>Response — 202 Accepted</h4>
+    <pre>{`{
+  "run_id": "run_a1b2c3d4e5f6",
+  "status": "pending",
+  "poll_url": "/run/run_a1b2c3d4e5f6"
+}`}</pre>
+
+    <h4>Example</h4>
+    <pre>curl -X POST https://api.example.com/run \
+  -H "Content-Type: application/json" \
+  -d '{"requirements": "Build a REST API with CRUD endpoints for a todo list."}'</pre>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="path">/run/{"{run_id}"}</span>
+    </div>
+    <p class="desc">Poll run status. While running, partial results are returned as each agent completes.</p>
+
+    <h4>Response — 200 OK</h4>
+    <pre>{`{
+  "run_id": "run_a1b2c3d4e5f6",
+  "status": "completed",
+  "requirements": "Build a REST API...",
+  "plan": "## Summary\\nA FastAPI CRUD service...\\n\\n## Steps\\n1. ...",
+  "code": "from fastapi import FastAPI\\n\\napp = FastAPI()\\n...",
+  "review": {
+    "quality_score": 0.85,
+    "summary": "Clean, well-structured FastAPI application.",
+    "approved": true
+  },
+  "test_results": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "success_rate": 1.0
+  },
+  "token_usage": {
+    "planner": 1240,
+    "coder": 3820,
+    "reviewer": 980,
+    "tester": 2100
+  },
+  "total_cost_usd": "0.083140",
+  "created_at": "2026-02-20T10:00:00Z",
+  "updated_at": "2026-02-20T10:01:45Z"
+}`}</pre>
+
+    <p class="note">Poll until <code>status</code> is <code>"completed"</code> or <code>"failed"</code>. Recommended interval: 5s.</p>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="path">/run</span>
+    </div>
+    <p class="desc">List runs by status using the DynamoDB GSI. No full table scans.</p>
+
+    <h4>Query Parameters</h4>
+    <pre>?status=completed   # pending | running | completed | failed (default: completed)
+?limit=20           # 1–100 (default: 20)</pre>
+
+    <h4>Response — 200 OK</h4>
+    <pre>{`{
+  "runs": [ { "run_id": "...", "status": "completed", ... } ],
+  "count": 1
+}`}</pre>
+  </div>
+
+  <h2>Operations</h2>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="path">/health</span>
+    </div>
+    <p class="desc">ECS health check endpoint. Called every 30s. Returns 200 if all downstream dependencies are reachable.</p>
+
+    <h4>Response — 200 OK</h4>
+    <pre>{`{
+  "status": "healthy",
+  "version": "1.0.0",
+  "checks": {
+    "dynamodb": "ok"
+  }
+}`}</pre>
+  </div>
+
+  <div class="endpoint">
+    <div class="endpoint-header">
+      <span class="method method-get">GET</span>
+      <span class="path">/metrics</span>
+    </div>
+    <p class="desc">JSON operational metrics. For curl debugging inside the VPC. CloudWatch dashboards use EMF metrics instead.</p>
+
+    <h4>Response — 200 OK</h4>
+    <pre>{`{
+  "uptime_seconds": 3600.1,
+  "runs": {
+    "completed": 142,
+    "running": 3,
+    "failed": 2
+  }
+}`}</pre>
+  </div>
+
+  <h2>Status Values</h2>
+  <pre>pending    → Run created, not yet picked up by worker
+running    → Graph executing — partial results may be available
+completed  → All agents finished, code + tests available
+failed     → Unrecoverable error — check last_error field</pre>
+</main>
+
+</body>
+</html>
