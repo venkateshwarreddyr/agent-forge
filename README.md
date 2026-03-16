@@ -1,4 +1,4 @@
-# Multi-Agent Orchestrator Platform
+# AgentForge
 
 Production-grade LangGraph.js code generation pipeline on AWS with NestJS — supervisor routing, retry/fallback, cost tracking, and OpenTelemetry observability.
 
@@ -83,8 +83,8 @@ ECS scales on `ApproximateNumberOfMessagesVisible`, not CPU. Predictive, not rea
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/venkateshwarreddyr/Multi-Agent-Orchestrator-Platform
-cd Multi-Agent-Orchestrator-Platform
+git clone https://github.com/venkateshwarreddyr/agent-forge
+cd agent-forge
 npm ci
 ```
 

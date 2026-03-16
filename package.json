@@ -1,5 +1,5 @@
 {
-  "name": "multi-agent-orchestrator",
+  "name": "agent-forge",
   "version": "1.0.0",
   "description": "Production-grade LangGraph agent orchestration on AWS with NestJS",
   "author": "",
