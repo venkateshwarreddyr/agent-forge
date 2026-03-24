@@ -4,6 +4,22 @@ Production-grade LangGraph.js code generation pipeline on AWS with NestJS — su
 
 ---
 
+## Screenshots
+
+### Dashboard — Submit a New Run
+![Submit Form](docs/screenshots/dashboard.png)
+
+### Runs List
+![Runs List](docs/screenshots/runs-list.png)
+
+### Health Check Endpoint (`GET /health`)
+![Health Endpoint](docs/screenshots/health-endpoint.png)
+
+### Metrics Endpoint (`GET /metrics`)
+![Metrics Endpoint](docs/screenshots/metrics-endpoint.png)
+
+---
+
 ## What It Does
 
 Converts natural-language requirements into reviewed, tested Python code through a supervised multi-agent pipeline:
@@ -19,22 +35,6 @@ POST /run → SQS → Worker
 ```
 
 The supervisor routes Coder → Reviewer → Coder in a revision loop until `quality_score ≥ 0.7` (max 3 cycles), then runs the Tester.
-
----
-
-## Screenshots
-
-### Dashboard — Submit a New Run
-![Submit Form](docs/screenshots/dashboard.png)
-
-### Runs List
-![Runs List](docs/screenshots/runs-list.png)
-
-### Health Check Endpoint (`GET /health`)
-![Health Endpoint](docs/screenshots/health-endpoint.png)
-
-### Metrics Endpoint (`GET /metrics`)
-![Metrics Endpoint](docs/screenshots/metrics-endpoint.png)
 
 ---
 
